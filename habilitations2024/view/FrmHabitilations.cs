@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 
-namespace habilitations2024
+
+namespace habilitations2024.view
 {
-    public partial class Form1 : Form
+    public partial class FrmHabitilations : Form
     {
-        public Form1()
+        public FrmHabitilations()
         {
             InitializeComponent();
         }
