@@ -1,44 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
-using System.Collections.Generic;
 
 namespace habilitations2024.bddmanager
 {
+    /// <summary>
+    /// Singleton : connexion à la base de données et exécution des requêtes
+    /// </summary>
     public class BddManager
     {
-        // Propriété qui contiendra l'unique instance de la classe
+        /// <summary>
+        /// instance unique de la classe
+        /// </summary>
         private static BddManager instance = null;
-
-        // Objet de connexion à la BDD à partir d'une chaîne de connexion
+        /// <summary>
+        /// objet de connexion à la BDD à partir d'une chaîne de connexion
+        /// </summary>
         private readonly MySqlConnection connection;
 
-        // Constructeur privé pour créer la connexion à la BDD et l'ouvrir
+        /// <summary>
+        /// Constructeur pour créer la connexion à la BDD et l'ouvrir
+        /// </summary>
+        /// <param name="stringConnect">chaine de connexion</param>
         private BddManager(string stringConnect)
         {
-            this.connection = new MySqlConnection(stringConnect);
-            this.connection.Open(); // Pas de try/catch ici
+            connection = new MySqlConnection(stringConnect);
+            connection.Open();
         }
 
-        // Méthode statique pour créer une seule instance de la classe
+        /// <summary>
+        /// Création d'une seule instance de la classe
+        /// </summary>
+        /// <param name="stringConnect">chaine de connexion</param>
+        /// <returns>instance unique de la classe</returns>
         public static BddManager GetInstance(string stringConnect)
         {
             if (instance == null)
             {
-                
                 instance = new BddManager(stringConnect);
             }
             return instance;
         }
 
-        // Exécution d'une requête autre que "select"
+        /// <summary>
+        /// Exécution d'une requête autre que "select"
+        /// </summary>
+        /// <param name="stringQuery">requête autre que select</param>
+        /// <param name="parameters">dictionnire contenant les parametres</param>
         public void ReqUpdate(string stringQuery, Dictionary<string, object> parameters = null)
         {
-            MySqlCommand command = new MySqlCommand(stringQuery, this.connection);
-            if (parameters != null)
+            MySqlCommand command = new MySqlCommand(stringQuery, connection);
+            if (!(parameters is null))
             {
                 foreach (KeyValuePair<string, object> parameter in parameters)
                 {
@@ -46,7 +58,38 @@ namespace habilitations2024.bddmanager
                 }
             }
             command.Prepare();
-            command.ExecuteNonQuery(); 
+            command.ExecuteNonQuery();
         }
+
+        /// <summary>
+        /// Execution d'une requête de type "select"
+        /// </summary>
+        /// <param name="stringQuery">requête select</param>
+        /// <param name="parameters">dictoinnaire contenant les parametres</param>
+        /// <returns>liste de tableaux d'objets contenant les valeurs des colonnes</returns>
+        public List<Object[]> ReqSelect(string stringQuery, Dictionary<string, object> parameters = null)
+        {
+            MySqlCommand command = new MySqlCommand(stringQuery, connection);
+            if (!(parameters is null))
+            {
+                foreach (KeyValuePair<string, object> parameter in parameters)
+                {
+                    command.Parameters.Add(new MySqlParameter(parameter.Key, parameter.Value));
+                }
+            }
+            command.Prepare();
+            MySqlDataReader reader = command.ExecuteReader();
+            int nbCols = reader.FieldCount;
+            List<Object[]> records = new List<object[]>();
+            while (reader.Read())
+            {
+                Object[] attributs = new Object[nbCols];
+                reader.GetValues(attributs);
+                records.Add(attributs);
+            }
+            reader.Close();
+            return records;
+        }
+
     }
 }
